@@ -117,19 +117,19 @@ class JavaConstructor extends JavaElement {
         if (eParameters != null) {
             let raw = '';
             let indent = 0;
-            for(const char of eParameters.textContent) {
-                if(indent !== 0) {
-                    if(char === '<') {
+            for (const char of eParameters.textContent) {
+                if (indent !== 0) {
+                    if (char === '<') {
                         indent++;
-                    } else if(char === '>') {
+                    } else if (char === '>') {
                         indent--;
                     }
                     continue;
                 } else {
-                    if(char === '<') {
+                    if (char === '<') {
                         indent++;
                         continue;
-                    } else if(char === '>') {
+                    } else if (char === '>') {
                         indent--;
                         continue;
                     }
@@ -210,6 +210,27 @@ class JavaConstructor extends JavaElement {
     }
 }
 
+class JavaMethodCluster {
+    readonly methods: JavaMethod[] = [];
+    readonly name: string;
+
+    constructor(name: string) {
+        this.name = name;
+    }
+
+    sort(): JavaMethod[] {
+        this.methods.sort((a, b) => {
+            return a.parameters.length - b.parameters.length;
+        });
+        return this.methods;
+    }
+
+    add(method: JavaMethod) {
+        if (this.methods.indexOf(method) !== -1) return;
+        this.methods.push(method);
+    }
+}
+
 class JavaMethod extends JavaElement {
     readonly name: string;
     readonly modifiers: string[] = [];
@@ -222,9 +243,12 @@ class JavaMethod extends JavaElement {
     constructor(element: HTMLElement) {
         super(element);
 
-        const name = this.getText('.member-signature > .element-name');
-        if (name != undefined) this.name = name;
-        else throw new Error('Name is not defined for JavaConstructor.');
+        let name = this.getText('.member-signature > .element-name');
+        if (name != undefined) {
+            if (name === 'toString') name = '__toString';
+            else if (name === 'valueOf') name = '__valueOf';
+            this.name = name;
+        } else throw new Error('Name is not defined for JavaConstructor.');
 
         const modifiers = this.getText('.member-signature > .modifiers');
         if (modifiers != undefined) this.modifiers = modifiers.split(' ');
@@ -237,22 +261,21 @@ class JavaMethod extends JavaElement {
         )?.parentNode;
 
         if (eParameters != null) {
-
             let raw = '';
             let indent = 0;
-            for(const char of eParameters.textContent) {
-                if(indent !== 0) {
-                    if(char === '<') {
+            for (const char of eParameters.textContent) {
+                if (indent !== 0) {
+                    if (char === '<') {
                         indent++;
-                    } else if(char === '>') {
+                    } else if (char === '>') {
                         indent--;
                     }
                     continue;
                 } else {
-                    if(char === '<') {
+                    if (char === '<') {
                         indent++;
                         continue;
-                    } else if(char === '>') {
+                    } else if (char === '>') {
                         indent--;
                         continue;
                     }
@@ -335,7 +358,7 @@ class JavaMethod extends JavaElement {
 
 class JavaClass extends JavaElement {
     readonly fields: { [name: string]: JavaField } = {};
-    readonly methods: { [name: string]: JavaMethod } = {};
+    readonly methods: { [name: string]: JavaMethodCluster } = {};
     readonly constructors: JavaConstructor[] = [];
 
     readonly package: string;
@@ -461,7 +484,13 @@ class JavaClass extends JavaElement {
                 }
 
                 const javaMethod = new JavaMethod(method);
-                this.methods[javaMethod.name] = javaMethod;
+
+                let cluster = this.methods[javaMethod.name];
+                if (cluster == undefined) {
+                    cluster = new JavaMethodCluster(javaMethod.name);
+                    this.methods[cluster.name] = cluster;
+                }
+                cluster.add(javaMethod);
             }
         }
     }
@@ -477,14 +506,18 @@ class JavaClass extends JavaElement {
             fieldsSorted.push(this.fields[key].toObject());
         }
 
-        const methodKeys = Object.keys(this.methods);
-        methodKeys.sort((a, b) => {
+        const methodClusterKeys = Object.keys(this.methods);
+        methodClusterKeys.sort((a, b) => {
             return a.localeCompare(b);
         });
 
         const methodsSorted = [];
-        for (const key of methodKeys) {
-            methodsSorted.push(this.methods[key].toObject());
+        for (const key of methodClusterKeys) {
+            const cluster = this.methods[key];
+            const methods = cluster.sort();
+            for (const method of methods) {
+                methodsSorted.push(method.toObject());
+            }
         }
 
         const constructors = this.constructors.map((c) => {
@@ -542,8 +575,9 @@ class JavaClassCatalog {
             const uri = `./docs/${classURI}`;
             try {
                 new JavaClass(uri).save();
-            } catch (ex) {
+            } catch (ex: any) {
                 console.error(`### Failed to scrape HTML file: ${uri}`);
+                console.error(ex.message);
                 failedFiles.push(uri);
             }
         }
