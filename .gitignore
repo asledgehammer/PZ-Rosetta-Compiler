@@ -1,0 +1,17 @@
+# node modules
+node_modules
+
+# build path
+dist
+
+# Place root dir of the JavaDocs website here. (index.html, zombie/**, etc.)
+docs
+
+# environmental variables
+.env
+
+# vscode config
+.vscode
+
+#coverage
+coverage
