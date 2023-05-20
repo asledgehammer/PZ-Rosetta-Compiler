@@ -115,7 +115,29 @@ class JavaConstructor extends JavaElement {
         )?.parentNode;
 
         if (eParameters != null) {
-            const sParameters = eParameters.textContent.split(',').map((s) => {
+            let raw = '';
+            let indent = 0;
+            for(const char of eParameters.textContent) {
+                if(indent !== 0) {
+                    if(char === '<') {
+                        indent++;
+                    } else if(char === '>') {
+                        indent--;
+                    }
+                    continue;
+                } else {
+                    if(char === '<') {
+                        indent++;
+                        continue;
+                    } else if(char === '>') {
+                        indent--;
+                        continue;
+                    }
+                    raw += char;
+                }
+            }
+
+            const sParameters = raw.split(',').map((s) => {
                 return s
                     .replace('(', '')
                     .replace(')', '')
@@ -215,7 +237,30 @@ class JavaMethod extends JavaElement {
         )?.parentNode;
 
         if (eParameters != null) {
-            const sParameters = eParameters.textContent.split(',').map((s) => {
+
+            let raw = '';
+            let indent = 0;
+            for(const char of eParameters.textContent) {
+                if(indent !== 0) {
+                    if(char === '<') {
+                        indent++;
+                    } else if(char === '>') {
+                        indent--;
+                    }
+                    continue;
+                } else {
+                    if(char === '<') {
+                        indent++;
+                        continue;
+                    } else if(char === '>') {
+                        indent--;
+                        continue;
+                    }
+                    raw += char;
+                }
+            }
+
+            const sParameters = raw.split(',').map((s) => {
                 return s
                     .replace('(', '')
                     .replace(')', '')
@@ -462,7 +507,7 @@ class JavaClass extends JavaElement {
 
     save(): void {
         const yaml = YAML.stringify(this.toObject());
-        const folder = `output/${this.package.replace(/\./g, '/')}/`;
+        const folder = `dist/${this.package.replace(/\./g, '/')}/`;
 
         let append = './';
         folder.split('/').forEach((f) => {
