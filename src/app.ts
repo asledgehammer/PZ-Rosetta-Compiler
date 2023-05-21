@@ -132,7 +132,7 @@ class JavaParameter {
         return {
             name: this.name,
             type: this.type,
-            full: this.full,
+            genericType: this.full !== this.type ? this.full: undefined,
             notes: this.notes,
         };
     }
