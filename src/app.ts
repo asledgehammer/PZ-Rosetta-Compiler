@@ -4,9 +4,7 @@ import * as YAML from 'yaml';
 import { HTMLElement, parse } from 'node-html-parser';
 import * as fs from 'fs';
 
-const RESERVED_FUNCTION_NAMES = [
-    'toString', 'valueOf'
-];
+const RESERVED_FUNCTION_NAMES = ['toString', 'valueOf'];
 const RESERVED_WORDS = [
     'and',
     'break',
@@ -29,7 +27,58 @@ const RESERVED_WORDS = [
     'true',
     'until',
     'while',
+
+    // NOTE: This is a technical issue involving 'snakeyaml' interpreting
+    //       this as a BOOLEAN not a STRING value.
+    'on',
+    'off',
+    'yes',
+    'no',
 ];
+
+function splitParameters(
+    paramString: string,
+): Array<{ param: string; full: string }> {
+    paramString = paramString
+        .replace('(', '')
+        .replace(')', '')
+        .replaceAll('\n', '').trim();
+
+    const params: Array<{ param: string; full: string }> = [];
+
+    let genericIndent = 0;
+    let current = { param: '', full: '' };
+
+    for (const char of paramString) {
+        // (Generics counter block)
+        if (char === '<') {
+            genericIndent++;
+            current.full += char;
+            continue;
+        } else if (char === '>') {
+            genericIndent--;
+            current.full += char;
+            continue;
+        }
+
+        // (Only split params if not inside of a Generics block)
+        if (char === ',' && genericIndent === 0) {
+            params.push(current);
+            if(current.full !== current.param) {
+                console.log(current);
+            }
+            current = { param: '', full: '' };
+            continue;
+        }
+
+        // (Add to basic param if not in Generics block)
+        if (genericIndent === 0) current.param += char;
+
+        current.full += char;
+    }
+
+    return params;
+}
 
 function isReservedWord(word: string): boolean {
     return RESERVED_WORDS.indexOf(word.toLowerCase()) !== -1;
@@ -65,22 +114,25 @@ abstract class JavaElement {
 class JavaParameter {
     readonly name: string;
     readonly type: string;
+    readonly full: string;
     notes: string | undefined;
 
     constructor(
         name: string,
         type: string,
-        notes: string | undefined = undefined,
+        full: string,
     ) {
         this.name = isReservedWord(name) ? `__${name}` : name;
         this.type = type;
-        this.notes = notes?.trim().replaceAll('&nbsp;', ' ');
+        this.full = full;
+        // this.notes = notes?.trim().replaceAll('&nbsp;', ' ');
     }
 
     toObject(): any {
         return {
             name: this.name,
             type: this.type,
+            full: this.full,
             notes: this.notes,
         };
     }
@@ -150,40 +202,15 @@ class JavaConstructor extends JavaElement {
         )?.parentNode;
 
         if (eParameters != null) {
-            let raw = '';
-            let indent = 0;
-            for (const char of eParameters.textContent) {
-                if (indent !== 0) {
-                    if (char === '<') {
-                        indent++;
-                    } else if (char === '>') {
-                        indent--;
-                    }
-                    continue;
-                } else {
-                    if (char === '<') {
-                        indent++;
-                        continue;
-                    } else if (char === '>') {
-                        indent--;
-                        continue;
-                    }
-                    raw += char;
-                }
-            }
-
-            const sParameters = raw.split(',').map((s) => {
-                return s
-                    .replace('(', '')
-                    .replace(')', '')
-                    .replaceAll('\n', '')
-                    .trim()
-                    .split(String.fromCharCode(160));
+            const paramsSplit = splitParameters(eParameters.textContent);
+            const funSpace = String.fromCharCode(160);
+            const sParameters = paramsSplit.map((a) => {
+                const split = a.param.split(funSpace);
+                return {name: split[1], type: split[0], full: a.full.split(funSpace)[0]};
             });
 
             for (const sParameter of sParameters) {
-                const [type, name] = sParameter;
-                this.parameters.push(new JavaParameter(name, type));
+                this.parameters.push(new JavaParameter(sParameter.name, sParameter.type, sParameter.full));
             }
         }
 
@@ -250,7 +277,7 @@ class JavaMethodCluster {
     readonly name: string;
 
     constructor(name: string) {
-        this.name = isReservedFunctionName(name) ? `__${name}`: name;
+        this.name = isReservedFunctionName(name) ? `__${name}` : name;
     }
 
     sort(): JavaMethod[] {
@@ -295,40 +322,15 @@ class JavaMethod extends JavaElement {
         )?.parentNode;
 
         if (eParameters != null) {
-            let raw = '';
-            let indent = 0;
-            for (const char of eParameters.textContent) {
-                if (indent !== 0) {
-                    if (char === '<') {
-                        indent++;
-                    } else if (char === '>') {
-                        indent--;
-                    }
-                    continue;
-                } else {
-                    if (char === '<') {
-                        indent++;
-                        continue;
-                    } else if (char === '>') {
-                        indent--;
-                        continue;
-                    }
-                    raw += char;
-                }
-            }
-
-            const sParameters = raw.split(',').map((s) => {
-                return s
-                    .replace('(', '')
-                    .replace(')', '')
-                    .replaceAll('\n', '')
-                    .trim()
-                    .split(String.fromCharCode(160));
+            const paramsSplit = splitParameters(eParameters.textContent);
+            const funSpace = String.fromCharCode(160);
+            const sParameters = paramsSplit.map((a) => {
+                const split = a.param.split(funSpace);
+                return {name: split[1], type: split[0], full: a.full.split(funSpace)[0]};
             });
 
             for (const sParameter of sParameters) {
-                const [type, name] = sParameter;
-                this.parameters.push(new JavaParameter(name, type));
+                this.parameters.push(new JavaParameter(sParameter.name, sParameter.type, sParameter.full));
             }
         }
 
