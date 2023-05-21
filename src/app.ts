@@ -4,6 +4,41 @@ import * as YAML from 'yaml';
 import { HTMLElement, parse } from 'node-html-parser';
 import * as fs from 'fs';
 
+const RESERVED_FUNCTION_NAMES = [
+    'toString', 'valueOf'
+];
+const RESERVED_WORDS = [
+    'and',
+    'break',
+    'do',
+    'else',
+    'elseif',
+    'end',
+    'false',
+    'for',
+    'function',
+    'if',
+    'in',
+    'local',
+    'nil',
+    'not',
+    'or',
+    'repeat',
+    'return',
+    'then',
+    'true',
+    'until',
+    'while',
+];
+
+function isReservedWord(word: string): boolean {
+    return RESERVED_WORDS.indexOf(word.toLowerCase()) !== -1;
+}
+
+function isReservedFunctionName(word: string): boolean {
+    return RESERVED_FUNCTION_NAMES.indexOf(word) !== -1;
+}
+
 abstract class JavaElement {
     readonly element: HTMLElement;
     public deprecated: boolean;
@@ -37,7 +72,7 @@ class JavaParameter {
         type: string,
         notes: string | undefined = undefined,
     ) {
-        this.name = name;
+        this.name = isReservedWord(name) ? `__${name}` : name;
         this.type = type;
         this.notes = notes?.trim().replaceAll('&nbsp;', ' ');
     }
@@ -215,7 +250,7 @@ class JavaMethodCluster {
     readonly name: string;
 
     constructor(name: string) {
-        this.name = name;
+        this.name = isReservedFunctionName(name) ? `__${name}`: name;
     }
 
     sort(): JavaMethod[] {
@@ -245,8 +280,7 @@ class JavaMethod extends JavaElement {
 
         let name = this.getText('.member-signature > .element-name');
         if (name != undefined) {
-            if (name === 'toString') name = '__toString';
-            else if (name === 'valueOf') name = '__valueOf';
+            name = isReservedFunctionName(name) ? `__${name}` : name;
             this.name = name;
         } else throw new Error('Name is not defined for JavaConstructor.');
 
