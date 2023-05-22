@@ -42,7 +42,8 @@ function splitParameters(
     paramString = paramString
         .replace('(', '')
         .replace(')', '')
-        .replaceAll('\n', '').trim();
+        .replaceAll('\n', '')
+        .trim();
 
     const params: Array<{ param: string; full: string }> = [];
 
@@ -64,9 +65,6 @@ function splitParameters(
         // (Only split params if not inside of a Generics block)
         if (char === ',' && genericIndent === 0) {
             params.push(current);
-            if(current.full !== current.param) {
-                console.log(current);
-            }
             current = { param: '', full: '' };
             continue;
         }
@@ -111,28 +109,42 @@ abstract class JavaElement {
     }
 }
 
+class JavaReturn {
+    readonly type: string;
+    readonly generic: string;
+    notes: string | undefined;
+
+    constructor(type: string, generic: string) {
+        this.type = type.trim();
+        this.generic = generic.trim();
+    }
+
+    toObject(): any {
+        return {
+            type: this.type,
+            generic: this.type !== this.generic ? this.generic : undefined,
+            notes: this.notes,
+        };
+    }
+}
+
 class JavaParameter {
     readonly name: string;
     readonly type: string;
-    readonly full: string;
+    readonly generic: string;
     notes: string | undefined;
 
-    constructor(
-        name: string,
-        type: string,
-        full: string,
-    ) {
+    constructor(name: string, type: string, generic: string) {
         this.name = isReservedWord(name) ? `__${name}` : name;
         this.type = type;
-        this.full = full;
-        // this.notes = notes?.trim().replaceAll('&nbsp;', ' ');
+        this.generic = generic;
     }
 
     toObject(): any {
         return {
             name: this.name,
             type: this.type,
-            genericType: this.full !== this.type ? this.full: undefined,
+            generic: this.generic !== this.type ? this.generic : undefined,
             notes: this.notes,
         };
     }
@@ -141,10 +153,13 @@ class JavaParameter {
 class JavaField extends JavaElement {
     readonly name: string;
     readonly modifiers: string[] = [];
-    readonly returnType: string | undefined;
+    readonly type: string | undefined;
+    readonly genericType: string | undefined;
     readonly parameters: JavaParameter[] = [];
 
     readonly notes: string | undefined;
+
+    readonly return: JavaReturn;
 
     constructor(element: HTMLElement) {
         super(element);
@@ -158,8 +173,16 @@ class JavaField extends JavaElement {
         const modifiers = this.getText('.member-signature > .modifiers');
         if (modifiers != undefined) this.modifiers = modifiers.split(' ');
 
+        // RETURN DATA
         const returnType = this.getText('.member-signature > .return-type');
-        if (returnType != undefined) this.returnType = returnType;
+        const genericType = this.getElement('.member-signature > .return-type')
+            ?.parentNode.text;
+        if (returnType == undefined || genericType == undefined) {
+            throw new Error(
+                'The return type for field ' + name + ' is missing.',
+            );
+        }
+        this.return = new JavaReturn(returnType, genericType);
 
         const notes =
             this.element.querySelector('.block')?.firstChild.innerText;
@@ -173,7 +196,7 @@ class JavaField extends JavaElement {
             name: this.name,
             deprecated: this.deprecated ? true : undefined,
             modifiers: this.modifiers.length !== 0 ? this.modifiers : undefined,
-            returnType: this.returnType,
+            return: this.return.toObject(),
             notes: this.notes,
         };
     }
@@ -206,11 +229,21 @@ class JavaConstructor extends JavaElement {
             const funSpace = String.fromCharCode(160);
             const sParameters = paramsSplit.map((a) => {
                 const split = a.param.split(funSpace);
-                return {name: split[1], type: split[0], full: a.full.split(funSpace)[0]};
+                return {
+                    name: split[1],
+                    type: split[0],
+                    full: a.full.split(funSpace)[0],
+                };
             });
 
             for (const sParameter of sParameters) {
-                this.parameters.push(new JavaParameter(sParameter.name, sParameter.type, sParameter.full));
+                this.parameters.push(
+                    new JavaParameter(
+                        sParameter.name,
+                        sParameter.type,
+                        sParameter.full,
+                    ),
+                );
             }
         }
 
@@ -297,10 +330,10 @@ class JavaMethod extends JavaElement {
     readonly name: string;
     readonly modifiers: string[] = [];
     readonly parameters: JavaParameter[] = [];
-    readonly returnType: string;
 
     readonly notes: string | undefined;
-    readonly returnNotes: string | undefined;
+
+    readonly return: JavaReturn;
 
     constructor(element: HTMLElement) {
         super(element);
@@ -314,9 +347,17 @@ class JavaMethod extends JavaElement {
         const modifiers = this.getText('.member-signature > .modifiers');
         if (modifiers != undefined) this.modifiers = modifiers.split(' ');
 
+        // RETURN DATA
         const returnType = this.getText('.member-signature > .return-type');
-        if (returnType != undefined) this.returnType = returnType;
-        else throw new Error('returnType not defined.');
+        const genericType = this.getElement('.member-signature > .return-type')
+            ?.parentNode.text;
+        if (returnType == undefined || genericType == undefined) {
+            throw new Error(
+                'The return type for field ' + name + ' is missing.',
+            );
+        }
+        this.return = new JavaReturn(returnType, genericType);
+
         const eParameters = this.getElement(
             '.member-signature > .parameters',
         )?.parentNode;
@@ -326,11 +367,21 @@ class JavaMethod extends JavaElement {
             const funSpace = String.fromCharCode(160);
             const sParameters = paramsSplit.map((a) => {
                 const split = a.param.split(funSpace);
-                return {name: split[1], type: split[0], full: a.full.split(funSpace)[0]};
+                return {
+                    name: split[1],
+                    type: split[0],
+                    full: a.full.split(funSpace)[0],
+                };
             });
 
             for (const sParameter of sParameters) {
-                this.parameters.push(new JavaParameter(sParameter.name, sParameter.type, sParameter.full));
+                this.parameters.push(
+                    new JavaParameter(
+                        sParameter.name,
+                        sParameter.type,
+                        sParameter.full,
+                    ),
+                );
             }
         }
 
@@ -351,7 +402,7 @@ class JavaMethod extends JavaElement {
                 if (next.innerText === 'Returns:') {
                     const payload = next.nextElementSibling;
                     if (payload != undefined) {
-                        this.returnNotes = payload.innerText.trim();
+                        this.return.notes = payload.innerText.trim();
                     }
                 } else if (next.innerText === 'Parameters:') {
                     const payload = next.nextElementSibling;
@@ -380,7 +431,7 @@ class JavaMethod extends JavaElement {
             name: this.name,
             deprecated: this.deprecated ? true : undefined,
             modifiers: this.modifiers.length !== 0 ? this.modifiers : undefined,
-            returnType: this.returnType,
+            return: this.return.toObject(),
             parameters:
                 this.parameters.length !== 0
                     ? this.parameters.map((p) => {
@@ -396,6 +447,7 @@ class JavaClass extends JavaElement {
     readonly fields: { [name: string]: JavaField } = {};
     readonly methods: { [name: string]: JavaMethodCluster } = {};
     readonly constructors: JavaConstructor[] = [];
+    readonly generic: string | undefined;
 
     readonly package: string;
     readonly name: string;
@@ -427,8 +479,19 @@ class JavaClass extends JavaElement {
         }
 
         this.type = 'unknown';
-        const name = this.getText('.type-signature > .element-name');
-        if (name == undefined) throw new Error('Name is undefined.');
+        
+        const eName = this.getElement('.type-signature > .element-name')?.parentNode;
+        if (eName == undefined) throw new Error('Name is undefined.');
+        
+        const eTemp = eName.textContent;
+        let name = this.getText('.type-signature > .element-name')!;
+        
+        if(name.indexOf('&lt;') !== -1) {
+            name = name.replaceAll('&lt;', '<').replaceAll('&gt;', '>');
+            this.generic = name;
+            name = name.split('<')[0];
+        }
+
         this.name = name;
 
         this.notes = this.getText('.class-description .block')?.trim();
@@ -564,6 +627,7 @@ class JavaClass extends JavaElement {
             package: this.package,
             type: this.type,
             name: this.name,
+            generic: this.generic,
             extends: this._extends != undefined ? this._extends : undefined,
             modifiers: this.modifiers.length !== 0 ? this.modifiers : undefined,
             deprecated: this.deprecated ? true : undefined,
