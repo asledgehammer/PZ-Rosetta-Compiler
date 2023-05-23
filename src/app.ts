@@ -39,6 +39,9 @@ const RESERVED_WORDS = [
 function splitParameters(
     paramString: string,
 ): Array<{ param: string; full: string }> {
+    
+    if(paramString === "") return [];
+    
     paramString = paramString
         .replace('(', '')
         .replace(')', '')
@@ -46,6 +49,8 @@ function splitParameters(
         .trim();
 
     const params: Array<{ param: string; full: string }> = [];
+
+
 
     let genericIndent = 0;
     let current = { param: '', full: '' };
@@ -74,6 +79,8 @@ function splitParameters(
 
         current.full += char;
     }
+
+    params.push(current);
 
     return params;
 }
@@ -185,7 +192,7 @@ class JavaField extends JavaElement {
         this.return = new JavaReturn(returnType, genericType);
 
         const notes =
-            this.element.querySelector('.block')?.firstChild.innerText;
+            this.element.querySelector('.block')?.innerText;
         if (notes != undefined) {
             this.notes = notes.trim().replaceAll('&nbsp;', ' ');
         }
@@ -230,9 +237,9 @@ class JavaConstructor extends JavaElement {
             const sParameters = paramsSplit.map((a) => {
                 const split = a.param.split(funSpace);
                 return {
-                    name: split[1],
-                    type: split[0],
-                    full: a.full.split(funSpace)[0],
+                    name: split[1].trim(),
+                    type: split[0].trim(),
+                    full: a.full.split(funSpace)[0].trim(),
                 };
             });
 
@@ -368,9 +375,9 @@ class JavaMethod extends JavaElement {
             const sParameters = paramsSplit.map((a) => {
                 const split = a.param.split(funSpace);
                 return {
-                    name: split[1],
-                    type: split[0],
-                    full: a.full.split(funSpace)[0],
+                    name: split[1].trim(),
+                    type: split[0].trim(),
+                    full: a.full.split(funSpace)[0].trim(),
                 };
             });
 
