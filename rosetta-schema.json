@@ -1,0 +1,376 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "schema.json",
+  "title": "PZ-Rosetta",
+  "description": "Definition file for PZ API.",
+  "type": "object",
+  "properties": {
+    "events": {
+      "$ref": "#/definitions/events"
+    },
+    "functions": {
+      "$ref": "#/definitions/functions"
+    },
+    "namespaces": {
+      "$ref": "#/definitions/namespaces"
+    },
+    "tables": {
+      "$ref": "#/definitions/tables"
+    }
+  },
+  "additionalItems": false,
+  "definitions": {
+    "events": {
+      "type": "object",
+      "description": "Lua Events.",
+      "minItems": 1,
+      "patternProperties": {
+        "^": {
+          "$ref": "#/definitions/event"
+        }
+      },
+      "additionalProperties": false
+    },
+    "event": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "callback": {
+          "$ref": "#/definitions/callback"
+        }
+      },
+      "additionalProperties": false
+    },
+    "callback": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "If the callback is deprecated."
+        },
+        "parameters": {
+          "$ref": "#/definitions/parameters"
+        },
+        "returns": {
+          "$ref": "#/definitions/returns"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "returns"
+      ],
+      "additionalProperties": false
+    },
+    "functions": {
+      "type": "object",
+      "description": "Global Functions.",
+      "minItems": 1,
+      "patternProperties": {
+        "^": {
+          "$ref": "#/definitions/function"
+        }
+      }
+    },
+    "function": {
+      "type": "object",
+      "description": "Function.",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "If the function is deprecated."
+        },
+        "parameters": {
+          "$ref": "#/definitions/parameters"
+        },
+        "returns": {
+          "$ref": "#/definitions/returns"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "returns"
+      ],
+      "additionalProperties": false
+    },
+    "tables": {
+      "type": "object",
+      "description": "Tables.",
+      "minItems": 1,
+      "patternProperties": {
+        "^": {
+          "$ref": "#/definitions/table"
+        }
+      }
+    },
+    "table": {
+      "type": "object",
+      "description": "Table.",
+      "properties": {
+        "deprecated": {
+          "type": "boolean",
+          "description": "If the class is deprecated."
+        },
+        "fields": {
+          "$ref": "#/definitions/fields"
+        },
+        "functions": {
+          "$ref": "#/definitions/functions"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "namespaces": {
+      "type": "object",
+      "description": "Namespaces.",
+      "minItems": 1,
+      "patternProperties": {
+        "^": {
+          "$ref": "#/definitions/namespace"
+        }
+      }
+    },
+    "namespace": {
+      "type": "object",
+      "description": "Namespace.",
+      "minItems": 1,
+      "patternProperties": {
+        "^": {
+          "$ref": "#/definitions/class"
+        }
+      },
+      "additionalProperties": false
+    },
+    "class": {
+      "type": "object",
+      "description": "Class.",
+      "properties": {
+        "generics": {
+          "$ref": "#/definitions/generics"
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "If the class is deprecated."
+        },
+        "javaType": {
+          "type": "string"
+        },
+        "extends": {
+          "type": "string"
+        },
+        "fields": {
+          "$ref": "#/definitions/fields"
+        },
+        "constructors": {
+          "$ref": "#/definitions/constructors"
+        },
+        "methods": {
+          "$ref": "#/definitions/methods"
+        },
+        "modifiers": {
+          "$ref": "#/definitions/modifiers"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "fields": {
+      "type": "object",
+      "description": "Fields.",
+      "minItems": 1,
+      "patternProperties": {
+        "^": {
+          "$ref": "#/definitions/field"
+        }
+      }
+    },
+    "field": {
+      "type": "object",
+      "description": "Field.",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "If the field is deprecated."
+        },
+        "modifiers": {
+          "$ref": "#/definitions/modifiers"
+        },
+        "type": {
+          "$ref": "#/definitions/type"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "methods": {
+      "type": "array",
+      "description": "Methods.",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/method"
+      }
+    },
+    "method": {
+      "type": "object",
+      "description": "Method.",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "modifiers": {
+          "$ref": "#/definitions/modifiers"
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "If the method is deprecated."
+        },
+        "parameters": {
+          "$ref": "#/definitions/parameters"
+        },
+        "returns": {
+          "$ref": "#/definitions/returns"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "returns"
+      ],
+      "additionalProperties": false
+    },
+    "constructors": {
+      "type": "array",
+      "description": "Constructors.",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/constructor"
+      }
+    },
+    "constructor": {
+      "type": "object",
+      "description": "Constructor.",
+      "properties": {
+        "modifiers": {
+          "$ref": "#/definitions/modifiers"
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "If the constructor is deprecated."
+        },
+        "parameters": {
+          "$ref": "#/definitions/parameters"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "parameters": {
+      "type": "array",
+      "description": "Parameters.",
+      "items": {
+        "$ref": "#/definitions/parameter"
+      },
+      "minItems": 1,
+      "additionalProperties": false
+    },
+    "parameter": {
+      "type": "object",
+      "description": "Parameter.",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/type"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "modifiers": {
+      "description": "Modifiers.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "returns": {
+      "description": "Returns.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/type"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "generics": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/type"
+      }
+    },
+    "type": {
+      "description": "Type.",
+      "type": "object",
+      "properties": {
+        "basic": {
+          "type": "string"
+        },
+        "full": {
+          "type": "string"
+        },
+        "generics": {
+          "$ref": "#/definitions/generics"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
