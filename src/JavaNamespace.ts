@@ -17,7 +17,9 @@ export class JavaNamespace {
         let text = '';
         if (format === 'yml') {
             path = `dist/yml/`;
-            text = `# ${this.name}\n` + YAML.stringify(this.toJSONObject());
+            const namespaces: { [name: string]: any } = {};
+            namespaces[this.name] = this.toJSONObject();
+            text = YAML.stringify({namespaces}, null, 2);
         } else {
             path = `dist/json/`;
             const namespaces: { [name: string]: any } = {};

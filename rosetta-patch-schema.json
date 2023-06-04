@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "schema.json",
-  "title": "PZ-Rosetta",
+  "title": "PZ-Rosetta-Patch",
   "description": "Definition file for PZ API.",
   "type": "object",
   "properties": {
@@ -38,22 +38,21 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "readOnly": true
         },
         "callback": {
           "$ref": "#/definitions/callback"
         },
-        "notes": {"type": "string"}
+        "notes": {
+          "type": "string"
+        }
       },
       "additionalProperties": false
     },
     "callback": {
       "type": "object",
       "properties": {
-        "deprecated": {
-          "type": "boolean",
-          "description": "If the callback is deprecated."
-        },
         "parameters": {
           "$ref": "#/definitions/parameters"
         },
@@ -64,9 +63,6 @@
           "type": "string"
         }
       },
-      "required": [
-        "returns"
-      ],
       "additionalProperties": false
     },
     "functions": {
@@ -84,11 +80,8 @@
       "description": "Function.",
       "properties": {
         "name": {
-          "type": "string"
-        },
-        "deprecated": {
-          "type": "boolean",
-          "description": "If the function is deprecated."
+          "type": "string",
+          "readOnly": true
         },
         "parameters": {
           "$ref": "#/definitions/parameters"
@@ -100,11 +93,6 @@
           "type": "string"
         }
       },
-      "required": [
-        "name",
-        "type",
-        "returns"
-      ],
       "additionalProperties": false
     },
     "tables": {
@@ -121,18 +109,14 @@
       "type": "object",
       "description": "Table.",
       "properties": {
-        "deprecated": {
-          "type": "boolean",
-          "description": "If the class is deprecated."
-        },
-        "values": {
-          "$ref": "#/definitions/values"
-        },
         "tables": {
           "$ref": "#/definitions/tables"
         },
         "functions": {
           "$ref": "#/definitions/functions"
+        },
+        "values": {
+          "$ref": "#/definitions/values"
         },
         "notes": {
           "type": "string"
@@ -155,18 +139,15 @@
       "description": "Value.",
       "properties": {
         "name": {
-          "type": "string"
-        },
-        "type": {
-          "$ref": "#/definitions/type"
+          "type": "string",
+          "readOnly": true
         },
         "notes": {
           "type": "string"
         }
       },
       "required": [
-        "name",
-        "type"
+        "name"
       ],
       "additionalProperties": false
     },
@@ -195,19 +176,6 @@
       "type": "object",
       "description": "Class.",
       "properties": {
-        "generics": {
-          "$ref": "#/definitions/generics"
-        },
-        "deprecated": {
-          "type": "boolean",
-          "description": "If the class is deprecated."
-        },
-        "javaType": {
-          "type": "string"
-        },
-        "extends": {
-          "type": "string"
-        },
         "fields": {
           "$ref": "#/definitions/fields"
         },
@@ -216,9 +184,6 @@
         },
         "methods": {
           "$ref": "#/definitions/methods"
-        },
-        "modifiers": {
-          "$ref": "#/definitions/modifiers"
         },
         "notes": {
           "type": "string"
@@ -241,25 +206,15 @@
       "description": "Field.",
       "properties": {
         "name": {
-          "type": "string"
-        },
-        "deprecated": {
-          "type": "boolean",
-          "description": "If the field is deprecated."
-        },
-        "modifiers": {
-          "$ref": "#/definitions/modifiers"
-        },
-        "type": {
-          "$ref": "#/definitions/type"
+          "type": "string",
+          "readOnly": true
         },
         "notes": {
           "type": "string"
         }
       },
       "required": [
-        "name",
-        "type"
+        "name"
       ],
       "additionalProperties": false
     },
@@ -276,14 +231,8 @@
       "description": "Method.",
       "properties": {
         "name": {
-          "type": "string"
-        },
-        "modifiers": {
-          "$ref": "#/definitions/modifiers"
-        },
-        "deprecated": {
-          "type": "boolean",
-          "description": "If the method is deprecated."
+          "type": "string",
+          "readOnly": true
         },
         "parameters": {
           "$ref": "#/definitions/parameters"
@@ -296,8 +245,7 @@
         }
       },
       "required": [
-        "name",
-        "returns"
+        "name"
       ],
       "additionalProperties": false
     },
@@ -313,13 +261,6 @@
       "type": "object",
       "description": "Constructor.",
       "properties": {
-        "modifiers": {
-          "$ref": "#/definitions/modifiers"
-        },
-        "deprecated": {
-          "type": "boolean",
-          "description": "If the constructor is deprecated."
-        },
         "parameters": {
           "$ref": "#/definitions/parameters"
         },
@@ -345,41 +286,20 @@
         "name": {
           "type": "string"
         },
-        "type": {
-          "$ref": "#/definitions/type"
-        },
         "notes": {
           "type": "string"
         }
       },
-      "required": [
-        "name",
-        "type"
-      ],
       "additionalProperties": false
-    },
-    "modifiers": {
-      "description": "Modifiers.",
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "minItems": 1
     },
     "returns": {
       "description": "Returns.",
       "type": "object",
       "properties": {
-        "type": {
-          "$ref": "#/definitions/type"
-        },
         "notes": {
           "type": "string"
         }
       },
-      "required": [
-        "type"
-      ],
       "additionalProperties": false
     },
     "generics": {
@@ -387,22 +307,6 @@
       "items": {
         "$ref": "#/definitions/type"
       }
-    },
-    "type": {
-      "description": "Type.",
-      "type": "object",
-      "properties": {
-        "basic": {
-          "type": "string"
-        },
-        "full": {
-          "type": "string"
-        },
-        "generics": {
-          "$ref": "#/definitions/generics"
-        }
-      },
-      "additionalProperties": false
     }
   }
 }
