@@ -36,7 +36,7 @@ export class JavaField extends JavaElement {
         this.type = new JavaType(basic, full);
 
         const notes =
-            this.element.querySelector('.block')?.firstChild.innerText;
+            this.element.querySelector('.block')?.text;
         if (notes != undefined) {
             this.notes = removeHtmlEncoding(notes.trim());
         }

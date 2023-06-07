@@ -26,14 +26,15 @@ export class JavaMethod extends JavaElement {
         if (modifiers != undefined) this.modifiers = modifiers.split(' ');
 
         const eReturnType = this.getElement('.member-signature > .return-type');
-        if (eReturnType == undefined) throw new Error("ReturnType not defined.");
+        if (eReturnType == undefined)
+            throw new Error('ReturnType not defined.');
         let returnType = eReturnType.text;
         const returnTypeFull = returnType;
-        if(returnType.indexOf('<') !== -1) {
+        if (returnType.indexOf('<') !== -1) {
             returnType = returnType.split('<')[0];
         }
         let returnNotes: string | undefined = undefined;
-        
+
         const eParameters = this.getElement(
             '.member-signature > .parameters',
         )?.parentNode;
@@ -47,14 +48,13 @@ export class JavaMethod extends JavaElement {
                 //     }
                 // }
 
-                const {name, type, typeFull} = sParameter;
+                const { name, type, typeFull } = sParameter;
                 const param = new JavaParameter(name, type, typeFull);
                 this.parameters.push(param);
             }
         }
 
-        const notes =
-            this.element.querySelector('.block')?.firstChild.text;
+        const notes = this.element.querySelector('.block')?.firstChild.text;
         if (notes != undefined) {
             this.notes = removeHtmlEncoding(notes.trim());
         }
@@ -72,7 +72,9 @@ export class JavaMethod extends JavaElement {
                 if (next.innerText === 'Returns:') {
                     const payload = next.nextElementSibling;
                     if (payload != undefined) {
-                        returnNotes = removeHtmlEncoding(payload.innerText.trim());
+                        returnNotes = removeHtmlEncoding(
+                            payload.innerText.trim(),
+                        );
                     }
                 } else if (next.innerText === 'Parameters:') {
                     const payload = next.nextElementSibling;
@@ -95,7 +97,14 @@ export class JavaMethod extends JavaElement {
             }
         }
 
-        this.returns = new JavaReturns(new JavaType(returnType, returnTypeFull), returnNotes);
+        this.returns = new JavaReturns(
+            new JavaType(returnType, returnTypeFull),
+            returnNotes,
+        );
+
+        // if(name === 'triggerEvent') {
+        //     console.log("### triggerEvent(" + this.parameters.map(a => `${a.type} ${a.name}`).join(', ') + ')');
+        // }
     }
 
     toJSONObject(): any {

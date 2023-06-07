@@ -3,15 +3,15 @@
 import * as YAML from 'yaml';
 import * as fs from 'fs';
 import { HTMLElement, parse } from 'node-html-parser';
+import { removeHtmlEncoding } from './Utils';
 import { JavaElement } from './JavaElement';
 import { JavaField } from './JavaField';
 import { JavaMethod } from './JavaMethod';
 import { JavaConstructor } from './JavaConstructor';
-import { removeHtmlEncoding } from './Utils';
 
 export class JavaClass extends JavaElement {
     readonly fields: { [name: string]: JavaField } = {};
-    readonly methods: { [name: string]: JavaMethod } = {};
+    readonly methods: { [name: string]: JavaMethod[] } = {};
     readonly constructors: JavaConstructor[] = [];
 
     readonly namespace: string;
@@ -47,13 +47,13 @@ export class JavaClass extends JavaElement {
         const eName = this.getElement('.type-signature > .element-name');
         if (eName == undefined) throw new Error('Name is undefined.');
         let name = eName.text;
-        if(name.indexOf("<") !== -1) {
-            name = name.split("<")[0];
+        if (name.indexOf('<') !== -1) {
+            name = name.split('<')[0];
         }
         this.name = name;
 
         const notes = this.getText('.class-description .block');
-        if(notes != undefined) {
+        if (notes != undefined) {
             this.notes = removeHtmlEncoding(notes.trim());
         }
 
@@ -148,7 +148,15 @@ export class JavaClass extends JavaElement {
                 }
 
                 const javaMethod = new JavaMethod(method);
-                this.methods[javaMethod.name] = javaMethod;
+                const { name: methodName } = javaMethod;
+
+                try {
+                    if (!this.methods[methodName])
+                        this.methods[methodName] = [];
+                    this.methods[methodName].push(javaMethod);
+                } catch (ex) {
+                    // This works but causes an error.. and I have no idea why. -Jab, 6/6/2023
+                }
             }
         }
     }
@@ -164,9 +172,9 @@ export class JavaClass extends JavaElement {
             extends: string | undefined;
             notes: string | undefined;
         } = {
-            fields: {},
-            constructors: [],
-            methods: [],
+            fields: undefined,
+            constructors: undefined,
+            methods: undefined,
             modifiers: this.modifiers.length !== 0 ? this.modifiers : undefined,
             deprecated: this.deprecated ? true : undefined,
             javaType: this.javaType,
@@ -175,23 +183,30 @@ export class JavaClass extends JavaElement {
         };
 
         const fieldKeys = Object.keys(this.fields);
-        fieldKeys.sort((a, b) => a.localeCompare(b));
-        for (const key of fieldKeys) {
-            obj.fields![key] = this.fields[key].toJSONObject();
+        if (fieldKeys.length !== 0) {
+            obj.fields = {};
+            fieldKeys.sort((a, b) => a.localeCompare(b));
+            for (const key of fieldKeys) {
+                obj.fields[key] = this.fields[key].toJSONObject();
+            }
+            
         }
 
         const methodKeys = Object.keys(this.methods);
-        methodKeys.sort((a, b) => a.localeCompare(b));
-        for (const key of methodKeys) {
-            obj.methods!.push(this.methods[key].toJSONObject());
+        if (methodKeys.length !== 0) {
+            obj.methods = [];
+            methodKeys.sort((a, b) => a.localeCompare(b));
+            for (const key of methodKeys) {
+                const cluster = this.methods[key];
+                for (const method of cluster) {
+                    obj.methods.push(method.toJSONObject());
+                }
+            }
         }
 
-        obj.constructors = this.constructors.map((c) => c.toJSONObject());
-
-        if (!obj.fields?.length) obj.fields = undefined;
-        if (!obj.methods?.length) obj.methods = undefined;
-        if (!obj.constructors?.length) obj.constructors = undefined;
-        if (!obj.deprecated) obj.deprecated = undefined;
+        if (this.constructors.length !== 0) {
+            obj.constructors = this.constructors.map((c) => c.toJSONObject());
+        }
 
         return obj;
     }
