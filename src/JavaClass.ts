@@ -20,6 +20,7 @@ export class JavaClass extends JavaElement {
     readonly notes: string | undefined;
     readonly 'extends': string | undefined;
     readonly javaType: string;
+    readonly nestedClasses: string[] = [];
 
     constructor(path: string) {
         super(parse(fs.readFileSync(path).toString()));
@@ -156,6 +157,22 @@ export class JavaClass extends JavaElement {
                     this.methods[methodName].push(javaMethod);
                 } catch (ex) {
                     // This works but causes an error.. and I have no idea why. -Jab, 6/6/2023
+                }
+            }
+        }
+
+        const nestedClassSummary = element.querySelector('#nested-class-summary');
+        if (nestedClassSummary != undefined) {
+            const nestedClasses = nestedClassSummary.querySelector(".summary-table");
+            if (nestedClasses != undefined) {
+                // TODO: filter out static nested classes, these are included in the class list already
+                for (const nestedClass of nestedClasses.querySelectorAll(".col-second").slice(1)) {
+                    var className = nestedClass.innerText.trim();
+                    // < character code, to remove generic parameters
+                    if (className.includes("&lt;")) {
+                        className = className.substring(0, className.indexOf("&lt;"));
+                    }
+                    this.nestedClasses.push(className);
                 }
             }
         }
