@@ -89,7 +89,6 @@ export class JavaMethod extends JavaElement {
                         for (const p of this.parameters) {
                             if (p.name === name) {
                                 p.notes = notes.trim();
-                                break;
                             }
                         }
                     }

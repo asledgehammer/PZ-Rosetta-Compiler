@@ -30,6 +30,12 @@ export class JavaCatalog {
                     this.namespaces[name] = new JavaNamespace(name);
                 }
                 this.namespaces[name].addClass(clazz);
+                for (var nestedClass of clazz.nestedClasses) {
+                    nestedClass = name.replaceAll(".", "/") + "/" + nestedClass + ".html"
+                    if (!classList.includes(nestedClass)) {
+                        classList.push(nestedClass)
+                    }
+                }
             } catch (ex) {
                 console.error(`### Failed to scrape file: ${uri}`);
                 failedFiles.push(uri);
