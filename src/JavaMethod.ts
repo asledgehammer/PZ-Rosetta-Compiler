@@ -77,20 +77,25 @@ export class JavaMethod extends JavaElement {
                         );
                     }
                 } else if (next.innerText === 'Parameters:') {
-                    const payload = next.nextElementSibling;
-                    const [name, notes] = payload.innerText
+                    var parameter = next
+                    while (parameter.nextElementSibling != undefined && parameter.nextElementSibling.tagName === 'DD') {
+                        const payload = parameter.nextElementSibling;
+                        const [name, notes] = payload.innerText
                         .trim()
                         .split(' -')
                         .map((s) => {
                             return s.trim();
                         });
 
-                    if (notes !== '') {
-                        for (const p of this.parameters) {
-                            if (p.name === name) {
-                                p.notes = notes.trim();
+                        if (notes !== '') {
+                            for (const p of this.parameters) {
+                                if (p.name === name) {
+                                    p.notes = notes.trim();
+                                    break;
+                                }
                             }
                         }
+                        parameter = payload;
                     }
                 }
             }
